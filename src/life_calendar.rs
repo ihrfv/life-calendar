@@ -31,9 +31,14 @@ impl LifeCalendar {
         if (self.bday - now).is_positive() {
             panic!("Where is your validation mister?");
         }
-        let years = now.year() - self.bday.year();
-        let last_anniversary = self.bday.replace_year(now.year()).unwrap();
+        let mut years = now.year() - self.bday.year();
+        let mut last_anniversary = self.bday.replace_year(now.year()).unwrap();
+        if (now.replace_year(self.bday.year()).unwrap() - self.bday).is_negative() {
+            years -= 1;
+            last_anniversary = self.bday.replace_year(now.year() - 1).unwrap();
+        }
         let weeks = (now - last_anniversary).whole_weeks();
+
         (years as u64, weeks as u8)
     }
 
@@ -51,14 +56,9 @@ mod test {
 
     #[test]
     fn date_in_past() {
-        let lc = LifeCalendar::new_with_now(
-            2000,
-            1,
-            22,
-            Date::from_calendar_date(2026, Month::April, 23).unwrap(),
-        )
-        .unwrap();
-        let (years, weeks) = lc.passed();
+        let now = Date::from_calendar_date(2026, Month::April, 23).unwrap();
+        let lc = LifeCalendar::new_with_now(2000, 1, 22, now).unwrap();
+        let (years, weeks) = lc.passed_since(now);
         assert_eq!(years, 26);
         assert_eq!(weeks, 13);
     }
@@ -76,15 +76,19 @@ mod test {
 
     #[test]
     fn same_date() {
-        let lc = LifeCalendar::new_with_now(
-            2026,
-            4,
-            23,
-            Date::from_calendar_date(2026, Month::April, 23).unwrap(),
-        )
-        .unwrap();
-        let (years, weeks) = lc.passed();
+        let now = Date::from_calendar_date(2026, Month::April, 23).unwrap();
+        let lc = LifeCalendar::new_with_now(2026, 4, 23, now).unwrap();
+        let (years, weeks) = lc.passed_since(now);
         assert_eq!(years, 0);
         assert_eq!(weeks, 0);
+    }
+
+    #[test]
+    fn date_with_month_later_than_current_month() {
+        let now = Date::from_calendar_date(2026, Month::April, 23).unwrap();
+        let lc = LifeCalendar::new_with_now(1998, 7, 28, now).unwrap();
+        let (years, weeks) = lc.passed_since(now);
+        assert_eq!(years, 27);
+        assert_eq!(weeks, 38);
     }
 }
