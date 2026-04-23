@@ -1,0 +1,8 @@
+[package]
+name = "life-calendar"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+argh = "0.1.19"
+time = { version = "0.3.47", features = ["macros"]}
